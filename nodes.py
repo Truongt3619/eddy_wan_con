@@ -1,0 +1,310 @@
+AUTHOR = "eddy"
+import os
+import gc
+import re
+import hashlib
+import torch
+import sys
+from comfy import model_management as mm
+
+wrapper_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "ComfyUI-WanVideoWrapper"))
+if wrapper_path not in sys.path:
+    sys.path.insert(0, wrapper_path)
+
+import importlib.util
+spec = importlib.util.spec_from_file_location("wan_utils", os.path.join(wrapper_path, "utils.py"))
+wan_utils = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(wan_utils)
+log = wan_utils.log
+set_module_tensor_to_device = wan_utils.set_module_tensor_to_device
+
+script_directory = os.path.dirname(os.path.abspath(__file__))
+offload_device = mm.unet_offload_device()
+cache_dir = os.path.join(script_directory, 'text_embed_cache')
+
+def get_cache_path(prompt):
+    cache_key = prompt.strip()
+    cache_hash = hashlib.sha256(cache_key.encode('utf-8')).hexdigest()
+    return os.path.join(cache_dir, f"{cache_hash}.pt")
+
+def get_cached_text_embeds(positive_prompt, negative_prompt):
+    os.makedirs(cache_dir, exist_ok=True)
+    context = None
+    context_null = None
+    pos_cache_path = get_cache_path(positive_prompt)
+    neg_cache_path = get_cache_path(negative_prompt)
+    if os.path.exists(pos_cache_path):
+        try:
+            log.info(f"Loading prompt embeds from cache: {pos_cache_path}")
+            context = torch.load(pos_cache_path)
+        except Exception as e:
+            log.warning(f"Failed to load cache: {e}, will re-encode.")
+    if os.path.exists(neg_cache_path):
+        try:
+            log.info(f"Loading prompt embeds from cache: {neg_cache_path}")
+            context_null = torch.load(neg_cache_path)
+        except Exception as e:
+            log.warning(f"Failed to load cache: {e}, will re-encode.")
+    return context, context_null
+
+
+class EddyWanVideoTextEncode:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "positive_prompt": ("STRING", {"default": "", "multiline": True}),
+                "negative_prompt": ("STRING", {"default": "", "multiline": True}),
+            },
+            "optional": {
+                "t5": ("WANTEXTENCODER",),
+                "model_to_offload": ("WANVIDEOMODEL", {"tooltip": "Model to move to offload_device before encoding"}),
+                "enable_cinematic": ("BOOLEAN", {"default": True}),
+                "time": ([
+                    "none",
+                    "Day time / 白天",
+                    "Night time / 夜晚",
+                    "Dawn time / 黎明",
+                    "Sunrise time / 日出"
+                ], {"default": "none"}),
+                "light_source": ([
+                    "none",
+                    "Daylight / 日光",
+                    "Artificial lighting / 人工光",
+                    "Moonlight / 月光",
+                    "Practical lighting / 实用光",
+                    "Firelight / 火光",
+                    "Fluorescent lighting / 荧光",
+                    "Overcast lighting / 阴天光",
+                    "Sunny lighting / 晴天光"
+                ], {"default": "none"}),
+                "light_intensity": ([
+                    "none",
+                    "Soft lighting / 柔光",
+                    "Hard lighting / 硬光"
+                ], {"default": "none"}),
+                "light_angle": ([
+                    "none",
+                    "Top lighting / 顶光",
+                    "Side lighting / 侧光",
+                    "Underlighting / 底光",
+                    "Edge lighting / 边缘光"
+                ], {"default": "none"}),
+                "color_tone": ([
+                    "none",
+                    "Warm colors / 暖色调",
+                    "Cool colors / 冷色调",
+                    "Mixed colors / 混合色调"
+                ], {"default": "none"}),
+                "shot_size": ([
+                    "none",
+                    "Medium shot / 中景",
+                    "Medium close-up shot / 中近景",
+                    "Wide shot / 全景",
+                    "Medium wide shot / 中全景",
+                    "Close-up shot / 近景",
+                    "Extreme close-up shot / 特写",
+                    "Extreme wide shot / 大全景"
+                ], {"default": "none"}),
+                "camera_angle": ([
+                    "none",
+                    "Over-the-shoulder shot / 过肩镜头",
+                    "Low angle shot / 低角度",
+                    "High angle shot / 高角度",
+                    "Dutch angle shot / 倾斜角度",
+                    "Aerial shot / 航拍",
+                    "Overhead shot / 俯视"
+                ], {"default": "none"}),
+                "composition": ([
+                    "none",
+                    "Center composition / 中心构图",
+                    "Balanced composition / 平衡构图",
+                    "Right-heavy composition / 右侧重构图",
+                    "Left-heavy composition / 左侧重构图",
+                    "Symmetrical composition / 对称构图",
+                    "Short-side composition / 短边构图"
+                ], {"default": "none"}),
+                "camera_motion": ([
+                    "none",
+                    "static / 静止",
+                    "pan left / 左摇",
+                    "pan right / 右摇",
+                    "tilt up / 上倾",
+                    "tilt down / 下倾",
+                    "dolly in / 推进",
+                    "dolly out / 拉远",
+                    "pull back / 后退",
+                    "crane up / 升起",
+                    "crane down / 下降",
+                    "orbital arc / 弧线环绕",
+                    "orbit left / 左环绕",
+                    "orbit right / 右环绕",
+                    "360 orbit / 360度环绕",
+                    "tracking shot / 追踪",
+                    "crash zoom / 快速变焦",
+                    "camera roll / 翻滚",
+                    "slow-motion pan left / 慢动作左摇",
+                    "slow-motion pan right / 慢动作右摇",
+                    "rapid whip-pan left / 快速左甩",
+                    "rapid whip-pan right / 快速右甩",
+                    "time-lapse / 延时"
+                ], {"default": "none"}),
+                "force_offload": ("BOOLEAN", {"default": True}),
+                "use_disk_cache": ("BOOLEAN", {"default": False}),
+                "device": (["gpu", "cpu"], {"default": "gpu"}),
+            }
+        }
+
+    RETURN_TYPES = ("WANVIDEOTEXTEMBEDS",)
+    RETURN_NAMES = ("text_embeds",)
+    FUNCTION = "process"
+    CATEGORY = "EddyWanCon"
+    DESCRIPTION = "Eddy's standalone WanVideo TextEncode with integrated cinematic and motion controls"
+
+    def process(self, positive_prompt, negative_prompt, t5=None, model_to_offload=None,
+                enable_cinematic=True, time="Day time", light_source="Daylight",
+                light_intensity="Soft lighting", light_angle="Side lighting",
+                color_tone="Warm colors", shot_size="Medium shot",
+                camera_angle="none", composition="Center composition",
+                camera_motion="none", force_offload=True,
+                use_disk_cache=False, device="gpu"):
+
+        if enable_cinematic:
+            terms = []
+            prefix_map = [
+                ("时间", time),
+                ("光源", light_source),
+                ("光线强度", light_intensity),
+                ("光线角度", light_angle),
+                ("色调", color_tone),
+                ("镜头尺寸", shot_size),
+                ("拍摄角度", camera_angle),
+                ("构图", composition),
+                ("运镜", camera_motion)
+            ]
+            
+            for prefix_cn, value in prefix_map:
+                if value != "none" and value:
+                    # Extract English part only (before " / ")
+                    value_en = value.split(" / ")[0] if " / " in value else value
+                    terms.append(f"{prefix_cn}：{value_en}")
+            
+            if terms:
+                prefix = ", ".join(terms)
+                positive_prompt = f"{prefix}, {positive_prompt}".strip()
+                log.info(f"Applied cinematic prefix: {prefix}")
+
+        echoshot = True if "[1]" in positive_prompt else False
+
+        if use_disk_cache:
+            context, context_null = get_cached_text_embeds(positive_prompt, negative_prompt)
+            if context is not None and context_null is not None:
+                return ({"prompt_embeds": context, "negative_prompt_embeds": context_null, "echoshot": echoshot},)
+        
+        if t5 is None:
+            raise ValueError("T5 encoder is required for text encoding. Please provide a valid T5 encoder or enable disk cache.")
+
+        if model_to_offload is not None and device == "gpu":
+            try:
+                log.info(f"Moving video model to {offload_device}")
+                model_to_offload.model.to(offload_device)
+            except:
+                pass
+
+        encoder = t5["model"]
+        dtype = t5["dtype"]
+
+        positive_prompts = []
+        all_weights = []
+
+        if "|" in positive_prompt:
+            log.info("Multiple positive prompts detected, splitting by '|'")
+            positive_prompts_raw = [p.strip() for p in positive_prompt.split('|')]
+        elif "[1]" in positive_prompt:
+            log.info("Multiple positive prompts detected, splitting by [#] and enabling EchoShot")
+            segments = re.split(r'\[\d+\]', positive_prompt)
+            positive_prompts_raw = [segment.strip() for segment in segments if segment.strip()]
+            assert len(positive_prompts_raw) > 1 and len(positive_prompts_raw) < 7, 'Input shot num must between 2~6 !'
+        else:
+            positive_prompts_raw = [positive_prompt.strip()]
+
+        for p in positive_prompts_raw:
+            cleaned_prompt, weights = self.parse_prompt_weights(p)
+            positive_prompts.append(cleaned_prompt)
+            all_weights.append(weights)
+
+        mm.soft_empty_cache()
+
+        if device == "gpu":
+            device_to = mm.get_torch_device()
+        else:
+            device_to = torch.device("cpu")
+
+        if encoder.quantization == "fp8_e4m3fn":
+            cast_dtype = torch.float8_e4m3fn
+        else:
+            cast_dtype = encoder.dtype
+
+        params_to_keep = {'norm', 'pos_embedding', 'token_embedding'}
+        for name, param in encoder.model.named_parameters():
+            dtype_to_use = dtype if any(keyword in name for keyword in params_to_keep) else cast_dtype
+            value = encoder.state_dict[name] if hasattr(encoder, 'state_dict') else encoder.model.state_dict()[name]
+            set_module_tensor_to_device(encoder.model, name, device=device_to, dtype=dtype_to_use, value=value)
+
+        if hasattr(encoder, 'state_dict'):
+            del encoder.state_dict
+            mm.soft_empty_cache()
+            gc.collect()
+
+        with torch.autocast(device_type=mm.get_autocast_device(device_to), dtype=encoder.dtype, enabled=encoder.quantization != 'disabled'):
+            context = encoder(positive_prompts, device_to)
+            for i, weights in enumerate(all_weights):
+                for text, weight in weights.items():
+                    log.info(f"Applying weight {weight} to prompt: {text}")
+                    if len(weights) > 0:
+                        context[i] = context[i] * weight
+            context_null = encoder([negative_prompt], device_to)
+
+        if force_offload:
+            encoder.model.to(offload_device)
+            mm.soft_empty_cache()
+            gc.collect()
+
+        if use_disk_cache:
+            pos_cache_path = get_cache_path(positive_prompt)
+            neg_cache_path = get_cache_path(negative_prompt)
+            try:
+                if not os.path.exists(pos_cache_path):
+                    torch.save(context, pos_cache_path)
+                    log.info(f"Saved prompt embeds to cache: {pos_cache_path}")
+            except Exception as e:
+                log.warning(f"Failed to save cache: {e}")
+            try:
+                if not os.path.exists(neg_cache_path):
+                    torch.save(context_null, neg_cache_path)
+                    log.info(f"Saved prompt embeds to cache: {neg_cache_path}")
+            except Exception as e:
+                log.warning(f"Failed to save cache: {e}")
+
+        return ({"prompt_embeds": context, "negative_prompt_embeds": context_null, "echoshot": echoshot},)
+
+    def parse_prompt_weights(self, prompt):
+        pattern = r'\((.*?):([\d\.]+)\)'
+        matches = re.findall(pattern, prompt)
+        cleaned_prompt = prompt
+        weights = {}
+        for match in matches:
+            text, weight = match
+            orig_text = f"({text}:{weight})"
+            cleaned_prompt = cleaned_prompt.replace(orig_text, text)
+            weights[text] = float(weight)
+        return cleaned_prompt, weights
+
+
+NODE_CLASS_MAPPINGS = {
+    "EddyWanVideoTextEncode": EddyWanVideoTextEncode,
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "EddyWanVideoTextEncode": "Eddy WanVideo TextEncode (Cinematic)",
+}
