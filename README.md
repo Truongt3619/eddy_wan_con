@@ -12,7 +12,8 @@ Author: eddy
 - Ενσωματωμένοι έλεγχοι κινηματογραφίας (χρόνος, φωτισμός, χρωματική τονικότητα, μέγεθος πλάνου, γωνία λήψης, σύνθεση)
 - Ενσωματωμένοι έλεγχοι κίνησης κάμερας (pan, tilt, dolly, crane, orbit, tracking, zoom, roll)
 - Ενσωματωμένοι έλεγχοι αισθητικής (color grading, lighting style, lens style, film stock, color palette)
-- 14 κατηγορίες ελέγχου με 85 επιλογές συνολικά
+- Επεκταμένοι έλεγχοι φωτισμού (40 επιλογές: rembrandt, golden hour, three-point, rim light κ.ά.)
+- 15 κατηγορίες ελέγχου με 108 επιλογές συνολικά
 - Αυτόματη προσθήκη επιλεγμένων όρων πριν από την κύρια προτροπή
 - Υποστήριξη των αρχικών δυνατοτήτων: prompt travel (|), EchoShot ([1]), συντακτικό βαρών (text:1.5)
 - Υποστήριξη προσωρινής μνήμης στον δίσκο
@@ -39,19 +40,20 @@ WanVideoSampler
 **Προαιρετικοί Κινηματογραφικοί Έλεγχοι:**
 - `enable_cinematic`: Ενεργοποίηση/Απενεργοποίηση (προεπιλογή: true)
 - `time`: Day/Night/Dawn/Sunrise
-- `light_source`: Daylight/Artificial/Moonlight/Fire κ.ά.
-- `light_intensity`: Soft/Hard lighting
-- `light_angle`: Top/Side/Under/Edge lighting
+- `light_source`: Daylight/Artificial/Moonlight/Fire κ.ά. (8 επιλογές)
+- `light_intensity`: Soft/Hard/Diffused/Dramatic/Ambient/Contrasty lighting (6 επιλογές)
+- `light_angle`: Top/Side/Under/Edge lighting (4 επιλογές)
 - `color_tone`: Warm/Cool/Mixed colors
 - `shot_size`: Medium/Close-up/Wide/Extreme shots
 - `camera_angle`: Over-the-shoulder/Low/High/Dutch/Aerial/Overhead
 - `composition`: Center/Balanced/Left-heavy/Right-heavy/Symmetrical
-- `camera_motion`: static/pan/tilt/dolly/crane/orbit/tracking/zoom/roll
+- `camera_motion`: static/pan/tilt/dolly/crane/orbit/tracking/zoom/roll (23 επιλογές)
 - `color_grading`: teal-and-orange/bleach-bypass/kodak portra
-- `lighting_style`: volumetric dusk/harsh noon sun/neon rim light
+- `lighting_style`: rembrandt/golden hour/blue hour/three-point/backlighting κ.ά. (16 επιλογές)
+- `lighting_technique`: key light/fill light/rim light/hair light κ.ά. (6 επιλογές)
 - `lens_style`: anamorphic bokeh/16mm grain/CGI stylized
-- `film_stock`: Kodak Vision3 500T/Cinestill 800T/Fuji Eterna κ.ά.
-- `color_palette`: high-contrast/low-contrast/pastel tones/monochrome κ.ά.
+- `film_stock`: Kodak Vision3 500T/Cinestill 800T/Fuji Eterna κ.ά. (6 επιλογές)
+- `color_palette`: high-contrast/low-contrast/pastel tones/monochrome κ.ά. (8 επιλογές)
 
 **Λοιπά:**
 - `force_offload`: Μεταφορά του T5 σε CPU μετά την κωδικοποίηση (προεπιλογή: true)
@@ -94,8 +96,9 @@ WanVideoSampler
 | Cache δίσκου | Ναι | Ναι |
 | Κινηματογραφικοί έλεγχοι (9 κατηγορίες) | Όχι | Ναι (ενσωματωμένοι) |
 | Έλεγχοι κίνησης κάμερας (23 επιλογές) | Όχι | Ναι (ενσωματωμένοι) |
-| Έλεγχοι αισθητικής (5 κατηγορίες, 23 επιλογές) | Όχι | Ναι (ενσωματωμένοι) |
-| Σύνολο επιλογών ελέγχου | 0 | 85 |
+| Έλεγχοι αισθητικής (6 κατηγορίες, 29 επιλογές) | Όχι | Ναι (ενσωματωμένοι) |
+| Έλεγχοι φωτισμού (40 επιλογές συνολικά) | Όχι | Ναι (επεκταμένοι) |
+| Σύνολο επιλογών ελέγχου | 0 | 108 |
 | Απαιτούνται ξεχωριστά prefix nodes | Όχι | Όχι |
 
 ## Σημειώσεις
@@ -104,6 +107,10 @@ WanVideoSampler
 - Βασισμένος στις επίσημες οδηγίες κινηματογραφίας WanVideo 2.2 A14B
 - Οι όροι κινηματογραφίας είναι στα Αγγλικά (συμβατοί με τις επίσημες προδιαγραφές)
 - Λειτουργεί με όλα τα μοντέλα WanVideo (A14B, 5B, I2V, T2V, κ.ά.)
+- Επεκταμένοι έλεγχοι φωτισμού βασισμένοι σε επαγγελματικές τεχνικές κινηματογραφίας
+  - Rembrandt lighting, Three-point lighting, Golden/Blue hour
+  - Key light, Fill light, Rim light, Hair light
+  - Πηγές: Wan 2.2 επίσημη τεκμηρίωση + MimicPC 69+ παραδείγματα + επαγγελματικά πρότυπα
 
 ## Παραδείγματα προτροπών
 
@@ -125,6 +132,11 @@ A girl walking in the park
 **Με πλήρη αισθητική ελέγχους:**
 ```
 时间：Night time, 光源：Moonlight, 运镜：dolly in, 调色：teal-and-orange, 光照风格：neon rim light, 镜头风格：anamorphic bokeh, 胶片：Kodak Vision3 500T, 色彩母题：low-contrast, A cinematic shot of a cyberpunk city
+```
+
+**Με προηγμένους ελέγχους φωτισμού:**
+```
+时间：Night time, 光源：Moonlight, 光线强度：Dramatic lighting, 光照风格：rembrandt lighting, 打光技术：rim light, 运镜：dolly in, 调色：teal-and-orange, A moody portrait of a detective
 ```
 
 Ο κόμβος προσθέτει αυτόματα τα προεπιθέματα· εσείς γράφετε μόνο την κύρια προτροπή.

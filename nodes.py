@@ -81,7 +81,11 @@ class EddyWanVideoTextEncode:
                 "light_intensity": ([
                     "none",
                     "Soft lighting / 柔光",
-                    "Hard lighting / 硬光"
+                    "Hard lighting / 硬光",
+                    "Diffused lighting / 漫射光",
+                    "Dramatic lighting / 戏剧光",
+                    "Ambient lighting / 环境光",
+                    "Contrasty lighting / 对比光"
                 ], {"default": "none"}),
                 "light_angle": ([
                     "none",
@@ -159,7 +163,20 @@ class EddyWanVideoTextEncode:
                     "none",
                     "volumetric dusk / 体积黄昏",
                     "harsh noon sun / 正午强光",
-                    "neon rim light / 霓虹缘光"
+                    "neon rim light / 霓虹缘光",
+                    "rembrandt lighting / 伦勃朗光",
+                    "three-point lighting / 三点光",
+                    "backlighting / 逆光",
+                    "dappled sunlight / 斑驳阳光",
+                    "golden hour / 黄金时刻",
+                    "blue hour / 蓝色时刻",
+                    "magic hour / 魔法时刻",
+                    "high-key lighting / 高调光",
+                    "low-key lighting / 低调光",
+                    "chiaroscuro lighting / 明暗对照",
+                    "butterfly lighting / 蝴蝶光",
+                    "loop lighting / 环形光",
+                    "split lighting / 分割光"
                 ], {"default": "none"}),
                 "lens_style": ([
                     "none",
@@ -187,6 +204,15 @@ class EddyWanVideoTextEncode:
                     "sepia tone / 棕褐色",
                     "duotone cyan-orange / 青橙双色"
                 ], {"default": "none"}),
+                "lighting_technique": ([
+                    "none",
+                    "key light / 主光",
+                    "fill light / 补光",
+                    "rim light / 轮廓光",
+                    "hair light / 发光",
+                    "background light / 背景光",
+                    "practical light source / 实用光源"
+                ], {"default": "none"}),
                 "force_offload": ("BOOLEAN", {"default": True}),
                 "use_disk_cache": ("BOOLEAN", {"default": False}),
                 "device": (["gpu", "cpu"], {"default": "gpu"}),
@@ -206,6 +232,7 @@ class EddyWanVideoTextEncode:
                 camera_angle="none", composition="none",
                 camera_motion="none", color_grading="none", lighting_style="none",
                 lens_style="none", film_stock="none", color_palette="none",
+                lighting_technique="none",
                 force_offload=True, use_disk_cache=False, device="gpu"):
 
         if enable_cinematic:
@@ -224,7 +251,8 @@ class EddyWanVideoTextEncode:
                 ("光照风格", lighting_style),
                 ("镜头风格", lens_style),
                 ("胶片", film_stock),
-                ("色彩母题", color_palette)
+                ("色彩母题", color_palette),
+                ("打光技术", lighting_technique)
             ]
             
             for prefix_cn, value in prefix_map:
